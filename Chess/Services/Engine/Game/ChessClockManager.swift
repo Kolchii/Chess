@@ -13,6 +13,7 @@ final class ChessClockManager: ClockServiceProtocol {
 
     private var timer: Timer?
 
+    private(set) var currentSettings = GameSettings(minutes: 10, increment: 0)
     private(set) var whiteTime: Int = 600
     private(set) var blackTime: Int = 600
     private(set) var increment: Int = 0
@@ -23,6 +24,7 @@ final class ChessClockManager: ClockServiceProtocol {
     var onTimeOver: ((PieceColor) -> Void)?
 
     func configure(settings: GameSettings) {
+        currentSettings = settings
         whiteTime = settings.minutes * 60
         blackTime = settings.minutes * 60
         increment = settings.increment
