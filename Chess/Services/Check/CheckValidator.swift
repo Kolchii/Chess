@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CheckValidator {
+enum CheckValidator: CheckServiceProtocol {
 
     static func isKingInCheck(color: PieceColor,
                               pieces: [ChessPiece]) -> Bool {

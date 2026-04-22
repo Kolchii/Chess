@@ -6,7 +6,7 @@
 //
 import Foundation
 
-final class LocalNetworkManager {
+final class LocalNetworkManager: BoardRepositoryProtocol {
 
     static let shared = LocalNetworkManager()
     private init() {}

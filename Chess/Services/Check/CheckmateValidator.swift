@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CheckmateValidator {
+enum CheckmateValidator: CheckmateServiceProtocol {
 
     static func isCheckmate(color: PieceColor,
                             pieces: [ChessPiece]) -> Bool {

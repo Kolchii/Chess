@@ -1,14 +1,8 @@
-//
-//  CapturedPiecesView.swift
-//  Chess
-//
-//  Created by Ibrahim Kolchi on 17.02.26.
-//
 import UIKit
 
 final class CapturedPiecesView: UIView {
 
-    private let stack = UIStackView()
+    private let piecesStack = UIStackView()
     private let scoreLabel = UILabel()
 
     override init(frame: CGRect) {
@@ -19,21 +13,20 @@ final class CapturedPiecesView: UIView {
     required init?(coder: NSCoder) { fatalError() }
 
     private func setup() {
+        piecesStack.axis = .horizontal
+        piecesStack.spacing = 2
+        piecesStack.alignment = .center
 
-        stack.axis = .horizontal
-        stack.spacing = 4
-        stack.alignment = .center
+        scoreLabel.font = ChessTheme.Font.body(size: 13)
+        scoreLabel.textColor = ChessTheme.Color.accent
 
-        scoreLabel.font = .systemFont(ofSize: 14, weight: .bold)
-        scoreLabel.textColor = .secondaryLabel
-
-        let container = UIStackView(arrangedSubviews: [stack, scoreLabel])
+        let container = UIStackView(arrangedSubviews: [piecesStack, scoreLabel])
         container.axis = .horizontal
-        container.spacing = 8
+        container.spacing = 6
         container.alignment = .center
+        container.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(container)
-        container.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             container.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -44,17 +37,31 @@ final class CapturedPiecesView: UIView {
     }
 
     func configure(with pieces: [ChessPiece], score: Int) {
+        piecesStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let sorted = pieces.sorted { $0.type.materialValue > $1.type.materialValue }
 
-        pieces.forEach { piece in
-            let iv = UIImageView(image: UIImage(named: "\(piece.color.rawValue)_\(piece.type.rawValue)"))
+        sorted.forEach { piece in
+            let iv = UIImageView(image: UIImage(named: piece.imageName))
             iv.contentMode = .scaleAspectFit
-            iv.widthAnchor.constraint(equalToConstant: 18).isActive = true
-            iv.heightAnchor.constraint(equalToConstant: 18).isActive = true
-            stack.addArrangedSubview(iv)
+            iv.widthAnchor.constraint(equalToConstant: 16).isActive = true
+            iv.heightAnchor.constraint(equalToConstant: 16).isActive = true
+            piecesStack.addArrangedSubview(iv)
         }
 
         scoreLabel.text = score > 0 ? "+\(score)" : ""
+    }
+}
+
+private extension PieceType {
+    var materialValue: Int {
+        switch self {
+        case .queen: return 9
+        case .rook: return 5
+        case .bishop: return 3
+        case .knight: return 3
+        case .pawn: return 1
+        case .king: return 0
+        }
     }
 }

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-final class ChessEngine {
+final class ChessEngine: MoveEngineProtocol {
 
     static let shared = ChessEngine()
     private init() {}
