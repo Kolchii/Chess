@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum MaterialCalculator {
+enum MaterialCalculator: MaterialServiceProtocol {
 
     static func value(of piece: PieceType) -> Int {
         switch piece {
@@ -33,7 +33,6 @@ enum MaterialCalculator {
         let whiteScore = materialScore(for: .white, pieces: pieces)
         let blackScore = materialScore(for: .black, pieces: pieces)
 
-        // kim qabaqdadırsa ona + yazılacaq
         if whiteScore > blackScore {
             return (whiteScore - blackScore, 0)
         } else if blackScore > whiteScore {
