@@ -6,7 +6,7 @@
 //
 import Foundation
 
-final class ChessClockManager {
+final class ChessClockManager: ClockServiceProtocol {
 
     static let shared = ChessClockManager()
     private init() {}

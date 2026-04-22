@@ -6,7 +6,7 @@
 //
 import AVFoundation
 
-final class SoundManager {
+final class SoundManager: SoundServiceProtocol {
 
     static let shared = SoundManager()
     private init() {
