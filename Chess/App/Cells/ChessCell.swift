@@ -1,9 +1,3 @@
-//
-//  ChessCell.swift
-//  Chess
-//
-//  Created by Ibrahim Kolchi on 16.02.26.
-//
 import UIKit
 
 final class ChessCell: UICollectionViewCell {
@@ -11,8 +5,9 @@ final class ChessCell: UICollectionViewCell {
     static let identifier = "ChessCell"
 
     private let pieceImageView = UIImageView()
-    private let moveDot = UIView()
     private let highlightView = UIView()
+    private let moveDot = UIView()
+    private let captureRing = UIView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -22,20 +17,27 @@ final class ChessCell: UICollectionViewCell {
     required init?(coder: NSCoder) { fatalError() }
 
     private func setup() {
+        clipsToBounds = true
 
         contentView.addSubview(highlightView)
         contentView.addSubview(pieceImageView)
         contentView.addSubview(moveDot)
+        contentView.addSubview(captureRing)
 
-        highlightView.translatesAutoresizingMaskIntoConstraints = false
-        pieceImageView.translatesAutoresizingMaskIntoConstraints = false
-        moveDot.translatesAutoresizingMaskIntoConstraints = false
+        [highlightView, pieceImageView, moveDot, captureRing].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
 
         pieceImageView.contentMode = .scaleAspectFit
 
-        moveDot.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.6)
-        moveDot.layer.cornerRadius = 10
+        moveDot.backgroundColor = ChessTheme.Board.moveDotColor
+        moveDot.layer.cornerRadius = 9
         moveDot.isHidden = true
+
+        captureRing.backgroundColor = .clear
+        captureRing.layer.borderColor = ChessTheme.Board.captureRingColor.cgColor
+        captureRing.layer.borderWidth = 4
+        captureRing.isHidden = true
 
         NSLayoutConstraint.activate([
             highlightView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -45,14 +47,24 @@ final class ChessCell: UICollectionViewCell {
 
             pieceImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             pieceImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            pieceImageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.8),
+            pieceImageView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.82),
             pieceImageView.heightAnchor.constraint(equalTo: pieceImageView.widthAnchor),
 
             moveDot.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             moveDot.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            moveDot.widthAnchor.constraint(equalToConstant: 20),
-            moveDot.heightAnchor.constraint(equalToConstant: 20)
+            moveDot.widthAnchor.constraint(equalToConstant: 18),
+            moveDot.heightAnchor.constraint(equalToConstant: 18),
+
+            captureRing.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 2),
+            captureRing.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -2),
+            captureRing.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 2),
+            captureRing.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -2)
         ])
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        captureRing.layer.cornerRadius = captureRing.bounds.width / 2
     }
 
     func configure(
@@ -65,38 +77,90 @@ final class ChessCell: UICollectionViewCell {
         isLastMoveFrom: Bool,
         isLastMoveTo: Bool
     ) {
-
         let isDark = (row + col) % 2 == 1
-        contentView.backgroundColor = isDark
-            ? UIColor(red: 0.45, green: 0.34, blue: 0.25, alpha: 1)
-            : UIColor(red: 0.93, green: 0.85, blue: 0.68, alpha: 1)
+        contentView.backgroundColor = isDark ? ChessTheme.Board.darkSquare : ChessTheme.Board.lightSquare
 
         highlightView.backgroundColor = .clear
-        layer.borderWidth = 0
+        highlightView.layer.borderWidth = 0
         moveDot.isHidden = true
+        captureRing.isHidden = true
 
-        if let piece {
+        if let piece = piece {
             pieceImageView.image = UIImage(named: piece.imageName)
         } else {
             pieceImageView.image = nil
         }
 
         if isLastMoveFrom || isLastMoveTo {
-            highlightView.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.35)
-        }
-
-        if isPossibleMove {
-            moveDot.isHidden = false
+            highlightView.backgroundColor = ChessTheme.Board.lastMoveOverlay
         }
 
         if isSelected {
-            layer.borderWidth = 3
-            layer.borderColor = UIColor.systemBlue.cgColor
+            highlightView.backgroundColor = ChessTheme.Board.selectedOverlay
         }
 
         if isKingInCheck {
-            layer.borderWidth = 4
-            layer.borderColor = UIColor.systemRed.cgColor
+            highlightView.backgroundColor = ChessTheme.Board.checkOverlay
         }
+
+        if isPossibleMove {
+            if piece != nil {
+                captureRing.isHidden = false
+            } else {
+                moveDot.isHidden = false
+            }
+        }
+
+        updateCoordinateLabel(row: row, col: col, isDark: isDark)
+    }
+
+    private var coordinateLabel: UILabel?
+
+    private func updateCoordinateLabel(row: Int, col: Int, isDark: Bool) {
+        coordinateLabel?.removeFromSuperview()
+        coordinateLabel = nil
+
+        let showFile = row == 7
+        let showRank = col == 0
+        guard showFile || showRank else { return }
+
+        let label = UILabel()
+        label.font = ChessTheme.Font.coordinate(size: 9)
+        label.textColor = isDark ? ChessTheme.Board.coordinateDark : ChessTheme.Board.coordinateLight
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        if showFile && showRank {
+            label.text = ["a","b","c","d","e","f","g","h"][col]
+            let rankLabel = UILabel()
+            rankLabel.font = ChessTheme.Font.coordinate(size: 9)
+            rankLabel.textColor = label.textColor
+            rankLabel.text = "\(8 - row)"
+            rankLabel.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(rankLabel)
+            NSLayoutConstraint.activate([
+                rankLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 2),
+                rankLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 2)
+            ])
+        } else if showFile {
+            label.text = ["a","b","c","d","e","f","g","h"][col]
+        } else {
+            label.text = "\(8 - row)"
+        }
+
+        contentView.addSubview(label)
+
+        if showFile {
+            NSLayoutConstraint.activate([
+                label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -2),
+                label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -2)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 2),
+                label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 2)
+            ])
+        }
+
+        coordinateLabel = label
     }
 }
